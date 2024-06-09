@@ -1,0 +1,73 @@
+@startuml class
+
+actor Actor
+    activate Actor
+    Actor -> MainApp: __init__()
+        activate MainApp
+        MainApp -> MainApp: initialize()
+            activate MainApp
+            return
+
+        MainApp -> AnnotationRepository: initialize()
+            activate AnnotationRepository
+            return 
+        return
+
+    Actor -> MainApp: run()
+        activate MainApp
+        loop alive
+            alt key == ESC
+                MainApp -> MainApp: alive=false
+            else key == DEL
+                MainApp -> MainApp: _clear_sam_result()
+                    activate MainApp
+                    MainApp -> MainApp: _segment_mask[:] = False
+                    MainApp -> MainApp: _update_window()
+                    return
+            else key == RIGHT_ARROW
+                MainApp -> MainApp: _load_next_image()
+                    activate MainApp
+                    MainApp -> ImageFileContainer: get_next()
+                        activate ImageFileContainer
+                        return img_path
+                    MainApp -> MainApp: _update_window_image(img_path)
+                        activate MainApp
+                        MainApp -> MainApp: _utils.load_image(img_path)
+                        MainApp -> SamPredictorWrapper: set_image(rgb_img)
+                            activate SamPredictorWrapper
+                            return
+                        MainApp -> MainApp: _update_window()
+                        return
+                    return
+            else key == LEFT_ARROW
+                MainApp -> MainApp: _load_prev_image()
+                    activate MainApp
+                    MainApp -> ImageFileContainer: get_prev()
+                        activate ImageFileContainer
+                        return img_path
+                    note right of MainApp: 省略
+                    return
+            end
+
+            alt cv2.EVNET_LBUTTON_UP
+                MainApp -> SamPredictorWrapper: set_prompt_point(x, y)
+                    activate SamPredictorWrapper
+                    return
+
+                MainApp -> MainApp: _run_sam_prediction()
+                    activate MainApp
+                    MainApp -> SamPredictorWrapper: predict()
+                        activate SamPredictorWrapper
+                        return
+
+                    MainApp -> AnnotationRepository: update(img_path)
+                        activate AnnotationRepository
+                        return
+                    return
+            else
+            end
+        end 
+        return
+
+
+@enduml
